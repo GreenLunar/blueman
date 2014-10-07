@@ -194,6 +194,7 @@ blueman/main/Makefile
 blueman/main/applet/Makefile
 blueman/ods/Makefile
 blueman/iniparse/Makefile
+blueman/services/Makefile
 data/Makefile
 data/configs/Makefile
 data/icons/Makefile

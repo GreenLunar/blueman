@@ -10,6 +10,7 @@ from blueman.gui.MessageArea import MessageArea
 from blueman.bluez.BlueZInterface import BlueZInterface
 
 from blueman.Lib import rfcomm_list
+from blueman.services import SerialPort
 
 
 def get_x_icon(icon_name, size):
@@ -94,23 +95,23 @@ class ManagerDeviceMenu(Gtk.Menu):
             if inst.SelectedDevice == self.SelectedDevice and not (inst.is_popup and not inst.props.visible):
                 inst.Generate()
 
-
     def service_property_changed(self, key, value):
         if key == "Connected":
             self.Generate()
 
+    def on_connect(self, _item, service):
+        device = service.device
 
-    def on_connect(self, item, device, service_id=None, *args):
         def success(*args2):
             try:
-                uuid16 = sdp_get_serial_type(device.Address, args[0])
+                uuid16 = sdp_get_serial_type(device.Address, service.uuid)
             except:
                 uuid16 = 0
 
             dprint("success", args2)
             prog.message(_("Success!"))
 
-            if service_id == "serial" and SERIAL_PORT_SVCLASS_ID in uuid16:
+            if isinstance(service, SerialPort) and SERIAL_PORT_SVCLASS_ID in uuid16:
                 MessageArea.show_message(_("Serial port connected to %s") % args2[0], Gtk.STOCK_DIALOG_INFO)
             else:
                 MessageArea.close()
@@ -138,66 +139,21 @@ class ManagerDeviceMenu(Gtk.Menu):
         except:
             pass
 
-        if service_id:
-            svc = device.Services[service_id]
-
-            if service_id == "network":
-                uuid = args[0]
-                appl.ServiceProxy(svc.get_interface_name(),
-                                  svc.get_object_path(),
-                                  "Connect",
-                                  [uuid],
-                                  reply_handler=success,
-                                  error_handler=fail, timeout=200)
-
-            elif service_id == "input":
-                appl.ServiceProxy(svc.get_interface_name(),
-                                  svc.get_object_path(),
-                                  "Connect", [],
-                                  reply_handler=success,
-                                  error_handler=fail, timeout=200)
-
-            elif service_id == "serial":
-                uuid = str(args[0])
-
-                appl.RfcommConnect(device.get_object_path(),
-                                   uuid,
-                                   reply_handler=success,
-                                   error_handler=fail, timeout=200)
-
-            else:
-                appl.ServiceProxy(svc.get_interface_name(),
-                                  svc.get_object_path(),
-                                  "Connect", [],
-                                  reply_handler=success,
-                                  error_handler=fail, timeout=200)
-        else:
-            appl.ServiceProxy(device.get_interface_name(), device.get_object_path(), 'Connect', [],
-                              reply_handler=success, error_handler=fail, timeout=200)
+        appl.connect_service(device.get_object_path(), service.uuid,
+                             reply_handler=success, error_handler=fail,
+                             timeout=200)
 
         prog.start()
 
-    def on_disconnect(self, item, device, service_id=None, *args):
-        if service_id == "serial":
-            try:
-                appl = AppletService()
-            except:
-                dprint("** Failed to connect to applet")
-            else:
-                appl.RfcommDisconnect(device.get_object_path(), args[0])
-                self.Generate()
-        else:
-            try:
-                appl = AppletService()
-            except:
-                dprint("** Failed to connect to applet")
-                return
-            if service_id:
-                connection_object = device.Services[service_id]
-            else:
-                connection_object = device
-            appl.ServiceProxy(connection_object.get_interface_name(),
-                              connection_object.get_object_path(), "Disconnect", [])
+    def on_disconnect(self, item, service, port=''):
+        try:
+            appl = AppletService()
+        except:
+            dprint("** Failed to connect to applet")
+            return
+
+        appl.disconnect_service(service.device.get_object_path(), service.uuid, port)
+        self.Generate()
 
 
     def on_device_property_changed(self, List, device, iter, (key, value)):

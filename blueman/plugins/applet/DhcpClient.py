@@ -1,9 +1,9 @@
+from blueman.bluez.Network import Network
 from blueman.gui.Notification import Notification
 from blueman.plugins.AppletPlugin import AppletPlugin
 from blueman.main.Mechanism import Mechanism
 from blueman.main.SignalTracker import SignalTracker
 from blueman.Functions import *
-from blueman.bluez.Network import Network
 
 
 class DhcpClient(AppletPlugin):

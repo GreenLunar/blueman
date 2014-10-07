@@ -261,15 +261,7 @@ def uuid128_to_uuid16(uuid128):
 		return int('0x'+uuid128[4:8], 16)
 	except:
 		return 0
-		
-def bluez_to_friendly_name(svc):
-	if svc == "audiosink":
-		return uuid_names[0x110b]
-	elif svc == "audiosource":
-		return uuid_names[0x110a]
-	else:
-		raise Exception
-		
+
 from blueman.main.Config import Config
 import pickle
 import base64

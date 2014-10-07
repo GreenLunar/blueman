@@ -2,8 +2,6 @@ from blueman.Functions import *
 from blueman.Constants import HAL_ENABLED
 from blueman.plugins.AppletPlugin import AppletPlugin
 from blueman.main.Mechanism import Mechanism
-from blueman.main.Config import Config
-from blueman.gui.Notification import Notification
 from blueman.Sdp import *
 from blueman.bluez.Network import Network
 
@@ -74,7 +72,8 @@ class NMIntegration(AppletPlugin):
 
         dprint("Unregistered modem")
 
-    def on_rfcomm_connected(self, device, port, uuid):
+    def on_rfcomm_connected(self, service, port, uuid):
+        device = service.device
         signals = SignalTracker()
 
         def modem_added(mon, udi, address):
@@ -88,7 +87,7 @@ class NMIntegration(AppletPlugin):
                 signals.DisconnectAll()
 
         def disconnected(mon, udi):
-            device.Services["serial"].Disconnect(port)
+            service.disconnect(port)
             self.UnregisterModem(port)
 
         def device_propery_changed(key, value):
@@ -108,10 +107,10 @@ class NMIntegration(AppletPlugin):
             signals.Handle("bluez", device.Device, device_propery_changed, "PropertyChanged")
             self.RegisterModem(device.get_object_path(), port)
 
-    def rfcomm_connect_handler(self, device, uuid, reply_handler, error_handler):
-        uuid16 = sdp_get_serial_type(device.Address, uuid)
+    def rfcomm_connect_handler(self, service, reply_handler, error_handler):
+        uuid16 = sdp_get_serial_type(service.device.Address, service.uuid)
         if DIALUP_NET_SVCLASS_ID in uuid16:
-            device.Services["serial"].Connect(uuid, reply_handler=reply_handler, error_handler=error_handler)
+            service.connect(reply_handler=reply_handler, error_handler=error_handler)
             return True
         else:
             return False

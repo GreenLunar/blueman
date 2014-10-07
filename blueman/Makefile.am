@@ -4,6 +4,7 @@ SUBDIRS =	\
 	main	\
 	ods	\
 	plugins \
+	services \
 	iniparse
 
 bluemandir = $(pythondir)/blueman
@@ -12,6 +13,7 @@ blueman_PYTHON = 	\
 	DeviceClass.py	\
 	Functions.py	\
 	Sdp.py		\
+	Service.py	\
 	Lib.py		\
 	__init__.py
 
