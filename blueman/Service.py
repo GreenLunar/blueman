@@ -1,6 +1,7 @@
 import dbus
-from blueman.Sdp import uuid128_to_uuid16, uuid16_to_name
+from blueman.Sdp import uuid128_to_uuid16, uuid16_to_name, sdp_get_cached_rfcomm
 from blueman.bluez.BlueZInterface import BlueZInterface
+from blueman.Lib import rfcomm_list
 
 
 class Service(object):
@@ -53,8 +54,25 @@ class Service(object):
         return self.__group__
 
     @property
-    def connected(self):
-        if self._service:
+    def ports(self):
+        if self.group == 'serial':
+            try:
+                for port_name, channel, uuid in sdp_get_cached_rfcomm(self.device.Address):
+                    if self.__svclass_id__ in uuid:
+                        yield port_name, channel
+            except KeyError:
+                pass
+
+    def serial_port_id(self, channel):
+        for dev in rfcomm_list():
+            if dev["dst"] == self.device.Address and dev["state"] == "connected" and dev["channel"] == channel:
+                return dev["id"]
+
+    @property
+    def connected(self, *args):
+        if self.group == 'serial':
+            return self.serial_port_id(args[0])
+        elif self._service:
             return self._service.get_properties()['Connected']
         elif self._legacy_interface:
             return self._legacy_interface.GetProperties()['Connected']

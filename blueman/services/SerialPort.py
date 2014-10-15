@@ -7,8 +7,3 @@ class SerialPort(Service):
     __svclass_id__ = SERIAL_PORT_SVCLASS_ID
     __icon__ = "blueman-serial"
     __priority__ = 50
-
-    @property
-    def connected(self):
-        # TODO: Detect connection state
-        return False
